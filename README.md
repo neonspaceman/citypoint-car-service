@@ -10,3 +10,5 @@
 ```db-migration```
 4. Тесты
 ```test-run```
+
+Проверить сервис можно тут: http://localhost:8000/api/cars

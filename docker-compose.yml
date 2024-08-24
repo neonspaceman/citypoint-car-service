@@ -1,0 +1,54 @@
+version: '3'
+services:
+    database:
+        image: mysql:8.0
+        container_name: ${DOCKER_CONTAINER_PREFIX}_mysql
+        command:
+            - "mysqld"
+            - "--sql_require_primary_key=1"
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - dbdata:/var/lib/mysql:rw
+            - ./docker/mysql/init:/docker-entrypoint-initdb.d
+
+    database_replica:
+        image: mysql:8.0
+        container_name: ${DOCKER_CONTAINER_PREFIX}_mysql_replica
+        command:
+            - "mysqld"
+            - "--sql_require_primary_key=1"
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${DB_REPLICA_DATABASE}
+            MYSQL_USER: ${DB_REPLICA_USERNAME}
+            MYSQL_PASSWORD: ${DB_REPLICA_PASSWORD}
+        volumes:
+            - dbdata_replica:/var/lib/mysql:rw
+            - ./docker/mysql/init:/docker-entrypoint-initdb.d
+
+    php:
+        build:
+            context: ./docker/php
+        container_name: ${DOCKER_CONTAINER_PREFIX}_php
+        volumes:
+            - ${DOCKER_PROJECT_PATH}:/var/www/public
+
+    nginx:
+        build:
+            context: ./docker/nginx
+        container_name: ${DOCKER_CONTAINER_PREFIX}_nginx
+        volumes:
+            - ${DOCKER_PROJECT_PATH}:/opt/example-app:delegated
+            - ${DOCKER_PROJECT_PATH}docker/nginx/sites:/etc/nginx/conf.d
+            - ${DOCKER_PROJECT_PATH}:/var/www/public
+        ports:
+            - 8000:80
+        depends_on:
+            - php
+volumes:
+    dbdata:
+    dbdata_replica:
